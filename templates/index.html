@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> QR Code Generator</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to right, #74ebd5, #acb6e5);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-text {
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .preview img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .btn-success {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn-success:hover {
+            background-color: #28a745;
+            transform: scale(1.05);
+        }
+
+        .alert {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generate  QR Code</h1>
+        <form id="qrForm" enctype="multipart/form-data">
+            <!-- QR Code Data -->
+            <div class="form-group">
+                <label for="data">Enter Data/URL:</label>
+                <input type="text" id="data" name="data" class="form-control" placeholder="Enter data for QR code" required>
+                <small class="form-text text-muted">Enter a valid URL or text for QR code.</small>
+            </div>
+
+            <!-- Foreground Color -->
+            <div class="form-group">
+                <label for="fg_color">Foreground Color:</label>
+                <input type="color" id="fg_color" name="fg_color" class="form-control" value="#000000">
+            </div>
+
+            <!-- Background Color -->
+            <div class="form-group">
+                <label for="bg_color">Background Color:</label>
+                <input type="color" id="bg_color" name="bg_color" class="form-control" value="#FFFFFF">
+            </div>
+
+            <!-- Size -->
+            <div class="form-group">
+                <label for="size">QR Code Size (scale):</label>
+                <input type="number" id="size" name="size" class="form-control" min="5" max="20" value="10">
+                <small class="form-text text-muted">Adjust the size of the QR code.</small>
+            </div>
+
+            <!-- DPI -->
+            <div class="form-group">
+                <label for="dpi">Image Resolution (DPI):</label>
+                <input type="number" id="dpi" name="dpi" class="form-control" min="72" max="600" value="300">
+                <small class="form-text text-muted">Higher DPI for better print quality.</small>
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="form-group">
+                <label for="logo">Upload Logo (optional):</label>
+                <input type="file" id="logo" name="logo" class="form-control-file" accept="image/*">
+                <small class="form-text text-muted">Upload a logo to overlay on the QR code.</small>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary btn-block">Generate QR Code</button>
+        </form>
+
+        <div class="preview">
+            <h3>QR Code Preview:</h3>
+            <img id="qr-code-preview" src="#" alt="QR Code Preview" style="display: none;">
+            <a id="download-btn" class="btn btn-success download-btn" href="#" download="qr_code.png" style="display: none;">Download QR Code</a>
+        </div>
+
+        <!-- Alert for errors -->
+        <div id="error-message" class="alert alert-danger mt-3"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('qrForm');
+        const preview = document.getElementById('qr-code-preview');
+        const downloadBtn = document.getElementById('download-btn');
+        const errorMessage = document.getElementById('error-message');
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            errorMessage.style.display = 'none'; // Hide any previous error message
+
+            const formData = new FormData(form);
+
+            fetch('/generate_qr', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.img_data) {
+                    // Display the QR code
+                    preview.src = 'data:image/png;base64,' + data.img_data;
+                    preview.style.display = 'block';
+
+                    // Set the download link
+                    downloadBtn.href = 'data:image/png;base64,' + data.img_data;
+                    downloadBtn.style.display = 'inline-block';
+                } else {
+                    // Show error message
+                    errorMessage.textContent = 'Error generating QR code. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMessage.textContent = 'An error occurred while generating the QR code.';
+                errorMessage.style.display = 'block';
+            });
+        });
+    </script>
+    <!-- Bootstrap JS (optional) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
